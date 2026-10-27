@@ -46,7 +46,7 @@ def evaluate_case(case: dict[str, Any]) -> CaseResult:
             reasons.append("A valid citation was required but none was found.")
 
     if expect.get("must_refuse", False):
-        # Dataset supplies an expected refusal label; keep this check explicit and auditable.
+        # Refusal cases use the label stored with the answer.
         checks["refusal_expected"] = bool(case.get("response_meta", {}).get("refused", False))
         if not checks["refusal_expected"]:
             reasons.append("The case expects a refusal, but response_meta.refused is false.")
@@ -61,7 +61,7 @@ def evaluate_case(case: dict[str, Any]) -> CaseResult:
     if context and answer.strip() and not expect.get("must_refuse", False):
         evidence_words = set().union(*(words(str(source.get("text", ""))) for source in context))
         answer_words = words(answer)
-        # Ignore citation tokens and conversational glue; expose the heuristic rather than overclaiming.
+        # Skip common words before comparing the answer with the source text.
         substantive = {word for word in answer_words if word not in {"the", "and", "with", "from", "this", "that", "are", "was", "for", "not", "can", "has", "have"}}
         checks["lexical_support"] = not substantive or bool(substantive & evidence_words)
         if not checks["lexical_support"]:
